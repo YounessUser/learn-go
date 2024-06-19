@@ -1,13 +1,47 @@
-// You can edit this code!
-// Click here and start typing.
 package main
 
 import (
 	"fmt"
 	"math"
+	"os"
 )
 
-func InitMatrix(row int, col int) [][]int {
+type Matrix struct {
+  rows int
+  cols int
+  data [][]int
+}
+
+var matrixes = make(map[string]Matrix)
+
+func InitMatrixes(){
+	var row int = 0
+	var col int = 0
+
+	fmt.Print("inset the first matrix size rows then cols : ")
+	_, err := fmt.Scan(&row, &col)
+	if err != nil {
+		panic(err)
+	}
+  	var matrix1 Matrix = Matrix{rows: row, cols: col}
+	fmt.Println("Define first matrix : ")
+	matrix1.data = fillMatrix(row, col)
+	DisplayMatrix(matrix1)
+	matrixes["matrix1"] = matrix1
+
+	fmt.Print("inset the second matrix size rows then cols : ")
+	_, err2 := fmt.Scan(&row, &col)
+	if err2 != nil {
+		panic(err2)
+	}
+  	var matrix2 Matrix = Matrix{rows: row, cols: col}
+	fmt.Println("Define second matrix : ")
+	matrix2.data = fillMatrix(row, col)
+	DisplayMatrix(matrix2)
+	matrixes["matrix2"] = matrix2
+}
+
+func fillMatrix(row int , col int) [][]int {
 	matrix := make([][]int, row)
 	for i := 0; i < row; i++ {
 		matrix[i] = make([]int, col)
@@ -20,35 +54,88 @@ func InitMatrix(row int, col int) [][]int {
 	return matrix
 }
 
-func DisplayMatrix(matrix [][]int) {
-	for i := 0; i < len(matrix); i++ {
+func DisplayMatrix(matrix Matrix) {
+	for i := 0; i < matrix.rows; i++ {
 		fmt.Print("( ")
-		for j := 0; j < len(matrix[i]); j++ {
-			fmt.Printf(" %v ", matrix[i][j])
+		for j := 0; j < matrix.cols; j++ {
+			fmt.Printf(" %v ", matrix.data[i][j])
 		}
 		fmt.Println(" )")
 	}
 }
 
-func MultiplyMarix(matrix1 [][]int, matrix2 [][]int) {
-	if len(matrix1) != len(matrix2[0]) && len(matrix1[0]) != len(matrix2) {
+func AddMarixes(matrix1 Matrix, matrix2 Matrix) {
+	if matrix1.rows != matrix2.rows && matrix1.cols != matrix2.cols {
 		return
 	}
-	matrix := make([][]int, len(matrix1))
+
+	var matrix Matrix = Matrix{rows: matrix1.rows, cols: matrix1.cols, data: make([][]int, matrix1.rows)}
+	for i := 0; i < matrix1.rows; i++ {
+		matrix.data[i] = make([]int, matrix1.cols)
+		for j := 0; j < matrix1.cols; j++ {
+			matrix.data[i][j] = matrix1.data[i][j] + matrix2.data[i][j]
+		}
+	}
+
+	fmt.Println("result of Adding matrixes : ")
+	DisplayMatrix(matrix)
+}
+
+func SubstractMarixes(matrix1 Matrix, matrix2 Matrix) {
+	if matrix1.rows != matrix2.rows && matrix1.cols != matrix2.cols {
+		return
+	}
+
+	var matrix Matrix = Matrix{rows: matrix1.rows, cols: matrix1.cols, data: make([][]int, matrix1.rows)}
+	for i := 0; i < matrix1.rows; i++ {
+		matrix.data[i] = make([]int, matrix1.cols)
+		for j := 0; j < matrix1.cols; j++ {
+			matrix.data[i][j] = matrix1.data[i][j] - matrix2.data[i][j]
+		}
+	}
+
+	fmt.Println("result of Substracting matrixes : ")
+	DisplayMatrix(matrix)
+}
+
+func MultiplyMarix(matrix1 Matrix, matrix2 Matrix) {
+	if matrix1.rows != matrix2.cols || matrix1.cols != matrix2.rows {
+		return
+	}
+	matrix := Matrix{rows: matrix1.rows, cols: matrix2.cols, data: make([][]int, matrix1.rows)}
 	sum := 0
-	for i := 0; i < len(matrix1); i++ {
-		matrix[i] = make([]int, len(matrix2[0]))
-		for j := 0; j < len(matrix2[0]); j++ {
+	for i := 0; i < matrix1.rows; i++ {
+		matrix.data[i] = make([]int, matrix2.cols)
+		for j := 0; j < matrix2.cols; j++ {
 			sum = 0
-			for k := 0; k < len(matrix1[0]); k++ {
-				sum += (matrix1[i][k] * matrix2[k][j])
+			for k := 0; k < matrix1.cols; k++ {
+				sum += (matrix1.data[i][k] * matrix2.data[k][j])
 			}
-			matrix[i][j] = sum
+			matrix.data[i][j] = sum
 		}
 	}
 
 	fmt.Println("result of multiplying : ")
 	DisplayMatrix(matrix)
+}
+
+// func InverseMatrix(matrix Matrix) Matrix {
+// 	inversedMatrix :=Matrix{rows: matrix.rows, cols: matrix.cols}
+// }
+
+func TransposeMatrix(matrix Matrix) Matrix {
+	transposedMatrix := Matrix{rows: matrix.cols, cols: matrix.rows, data: make([][]int, matrix.cols)}
+
+	for i := 0; i < matrix.cols; i++ {
+		transposedMatrix.data[i] = make([]int, matrix.rows)
+		for j := 0; j < matrix.rows; j++ {
+			transposedMatrix.data[i][j] = matrix.data[j][i]
+		}
+	}
+
+	fmt.Println("result of Transposed matrixes : ")
+	DisplayMatrix(transposedMatrix)
+	return transposedMatrix
 }
 
 // https://www.youtube.com/watch?v=QGYvbsHDPxo
@@ -86,29 +173,43 @@ func CheckPower2(num float64) bool {
 	return math.Floor(math.Log2(num)) == math.Ceil(math.Log2(num))
 }
 
-func main() {
-	var row int = 0
-	var col int = 0
+func menu() (choice int) {
+	fmt.Println("Welcome to matrix math app :")
+	fmt.Println("0) Exit")
+	fmt.Println("1) Add")
+	fmt.Println("2) Substract")
+	fmt.Println("3) devide")
+	fmt.Println("4) Multiply")
+	fmt.Println("5) Transpose")
+	fmt.Println("6) Inverse")
+	fmt.Println("7) Det")
 
-	fmt.Println("inset the your matrix size rows then cols : ")
-	_, err := fmt.Scan(&row, &col)
+	fmt.Println("Choose your operaion :")
+	_, err := fmt.Scanf("%d", &choice)
 	if err != nil {
 		panic(err)
 	}
+	return
+}
 
-	fmt.Println("Define first matrix : ")
-	var matrix [][]int = InitMatrix(row, col)
-	DisplayMatrix(matrix)
+func main() {
+	for {
+		var choice = menu()
 
-	fmt.Println("inset the your matrix size rows then cols : ")
-	_, err2 := fmt.Scan(&row, &col)
-	if err2 != nil {
-		panic(err2)
+		if (len(matrixes) == 0) {
+			InitMatrixes()
+		}
+		switch (choice) {
+			case 1:
+				AddMarixes(matrixes["matrix1"], matrixes["matrix2"])
+			case 2:
+				SubstractMarixes(matrixes["matrix1"], matrixes["matrix2"])
+			case 3:
+				MultiplyMarix(matrixes["matrix1"], matrixes["matrix2"])
+			case 5:
+				TransposeMatrix(matrixes["matrix1"])
+			default:
+				os.Exit(1)
+		}	
 	}
-
-	fmt.Println("Define first matrix : ")
-	var matrix2 [][]int = InitMatrix(row, col)
-	DisplayMatrix(matrix2)
-
-	MultiplyMarix(matrix, matrix2)
 }
