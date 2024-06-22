@@ -64,7 +64,7 @@ func DisplayMatrix(matrix Matrix) {
 	}
 }
 
-func AddMarixes(matrix1 Matrix, matrix2 Matrix) {
+func AddMarixes(matrix1 Matrix, matrix2 Matrix) Matrix {
 	if matrix1.rows != matrix2.rows && matrix1.cols != matrix2.cols {
 		return
 	}
@@ -77,11 +77,10 @@ func AddMarixes(matrix1 Matrix, matrix2 Matrix) {
 		}
 	}
 
-	fmt.Println("result of Adding matrixes : ")
-	DisplayMatrix(matrix)
+	return matrix
 }
 
-func SubstractMarixes(matrix1 Matrix, matrix2 Matrix) {
+func SubstractMarixes(matrix1 Matrix, matrix2 Matrix) Matrix {
 	if matrix1.rows != matrix2.rows && matrix1.cols != matrix2.cols {
 		return
 	}
@@ -94,11 +93,10 @@ func SubstractMarixes(matrix1 Matrix, matrix2 Matrix) {
 		}
 	}
 
-	fmt.Println("result of Substracting matrixes : ")
-	DisplayMatrix(matrix)
+	return matrix
 }
 
-func MultiplyMarix(matrix1 Matrix, matrix2 Matrix) {
+func MultiplyMarix(matrix1 Matrix, matrix2 Matrix) Matrix {
 	if matrix1.rows != matrix2.cols || matrix1.cols != matrix2.rows {
 		return
 	}
@@ -115,13 +113,59 @@ func MultiplyMarix(matrix1 Matrix, matrix2 Matrix) {
 		}
 	}
 
-	fmt.Println("result of multiplying : ")
-	DisplayMatrix(matrix)
+	return matrix
 }
 
-// func InverseMatrix(matrix Matrix) Matrix {
-// 	inversedMatrix :=Matrix{rows: matrix.rows, cols: matrix.cols}
-// }
+
+// ( 1 2 3 )
+// ( 4 5 6 )
+// ( 7 8 9 )
+func DeterminantMatrix(matrix Matrix) int {
+	if matrix.rows != matrix.cols {
+		return 0
+	}
+
+	detMatrix := 0;
+
+	if matrix.rows == 2 {
+		detMatrix = DetMatrixWithDementionTwo(matrix.data);
+		return detMatrix
+	}
+	
+	for i := 0; i < matrix.rows; i++ {
+		result := ExcludeLine(matrix.data, i)
+		detMatrix += int(math.Pow(-1, float64(i))) * DetMatrixWithDementionTwo(result)
+	}
+	return detMatrix
+}
+
+func ExcludeLine(matrix [][]int, line int) [][]int {
+	var size = len(matrix)
+	var result [][]int = make([][]int, size - 1)
+	k := 0
+	for i := 1; i < size; i++ {
+		result[k] = make([]int, size - 1)
+		d := 0
+		for j := 0; j < size ; j++ {
+			if j == line { continue }
+			result[k][d] = matrix[i][j];
+			d++;
+		}
+		k++;
+	}
+	return result
+}
+
+func DetMatrixWithDementionTwo(matrix [][]int) int {
+	return  matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0]
+}
+
+func InverseMatrix(matrix Matrix) Matrix {
+	inversedMatrix :=Matrix{rows: matrix.rows, cols: matrix.cols}
+
+
+	return inversedMatrix
+}
 
 func TransposeMatrix(matrix Matrix) Matrix {
 	transposedMatrix := Matrix{rows: matrix.cols, cols: matrix.rows, data: make([][]int, matrix.cols)}
@@ -133,8 +177,6 @@ func TransposeMatrix(matrix Matrix) Matrix {
 		}
 	}
 
-	fmt.Println("result of Transposed matrixes : ")
-	DisplayMatrix(transposedMatrix)
 	return transposedMatrix
 }
 
@@ -196,18 +238,33 @@ func main() {
 	for {
 		var choice = menu()
 
-		if (len(matrixes) == 0) {
+		if (len(matrixes) == 0 && choice != 0) {
 			InitMatrixes()
 		}
 		switch (choice) {
 			case 1:
-				AddMarixes(matrixes["matrix1"], matrixes["matrix2"])
+				result := AddMarixes(matrixes["matrix1"], matrixes["matrix2"])
+				fmt.Println("result of Adding matrixes : ")
+				DisplayMatrix(result)
 			case 2:
-				SubstractMarixes(matrixes["matrix1"], matrixes["matrix2"])
-			case 3:
-				MultiplyMarix(matrixes["matrix1"], matrixes["matrix2"])
+				result := SubstractMarixes(matrixes["matrix1"], matrixes["matrix2"])
+				fmt.Println("result of Substracting matrixes : ")
+				DisplayMatrix(result)
+			case 4:
+				result := MultiplyMarix(matrixes["matrix1"], matrixes["matrix2"])
+				fmt.Println("result of multiplying : ")
+				DisplayMatrix(result)
 			case 5:
-				TransposeMatrix(matrixes["matrix1"])
+				result1 := TransposeMatrix(matrixes["matrix1"])
+				fmt.Println("result of Transposed matrix 1 : ")
+				DisplayMatrix(result1)
+
+				result2 := TransposeMatrix(matrixes["matrix2"])
+				fmt.Println("result of Transposed matrix 2 : ")
+				DisplayMatrix(result2)
+			case 7:
+				fmt.Println("Det(matrix1) : ", DeterminantMatrix(matrixes["matrix1"]))
+				fmt.Println("Det(matrix2) : ", DeterminantMatrix(matrixes["matrix2"]))
 			default:
 				os.Exit(1)
 		}	
