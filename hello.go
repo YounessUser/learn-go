@@ -9,7 +9,7 @@ import (
 type Matrix struct {
   rows int
   cols int
-  data [][]int
+  data [][]float64
 }
 
 var matrixes = make(map[string]Matrix)
@@ -41,10 +41,10 @@ func InitMatrixes(){
 	matrixes["matrix2"] = matrix2
 }
 
-func fillMatrix(row int , col int) [][]int {
-	matrix := make([][]int, row)
+func fillMatrix(row int , col int) [][]float64 {
+	matrix := make([][]float64, row)
 	for i := 0; i < row; i++ {
-		matrix[i] = make([]int, col)
+		matrix[i] = make([]float64, col)
 		for j := 0; j < col; j++ {
 			fmt.Printf("inset the value of %vth row and %vth column : ", i, j)
 			fmt.Scan(&matrix[i][j])
@@ -66,12 +66,12 @@ func DisplayMatrix(matrix Matrix) {
 
 func AddMarixes(matrix1 Matrix, matrix2 Matrix) Matrix {
 	if matrix1.rows != matrix2.rows && matrix1.cols != matrix2.cols {
-		return
+		return Matrix{}
 	}
 
-	var matrix Matrix = Matrix{rows: matrix1.rows, cols: matrix1.cols, data: make([][]int, matrix1.rows)}
+	var matrix Matrix = Matrix{rows: matrix1.rows, cols: matrix1.cols, data: make([][]float64, matrix1.rows)}
 	for i := 0; i < matrix1.rows; i++ {
-		matrix.data[i] = make([]int, matrix1.cols)
+		matrix.data[i] = make([]float64, matrix1.cols)
 		for j := 0; j < matrix1.cols; j++ {
 			matrix.data[i][j] = matrix1.data[i][j] + matrix2.data[i][j]
 		}
@@ -82,12 +82,12 @@ func AddMarixes(matrix1 Matrix, matrix2 Matrix) Matrix {
 
 func SubstractMarixes(matrix1 Matrix, matrix2 Matrix) Matrix {
 	if matrix1.rows != matrix2.rows && matrix1.cols != matrix2.cols {
-		return
+		return Matrix{}
 	}
 
-	var matrix Matrix = Matrix{rows: matrix1.rows, cols: matrix1.cols, data: make([][]int, matrix1.rows)}
+	var matrix Matrix = Matrix{rows: matrix1.rows, cols: matrix1.cols, data: make([][]float64, matrix1.rows)}
 	for i := 0; i < matrix1.rows; i++ {
-		matrix.data[i] = make([]int, matrix1.cols)
+		matrix.data[i] = make([]float64, matrix1.cols)
 		for j := 0; j < matrix1.cols; j++ {
 			matrix.data[i][j] = matrix1.data[i][j] - matrix2.data[i][j]
 		}
@@ -98,12 +98,12 @@ func SubstractMarixes(matrix1 Matrix, matrix2 Matrix) Matrix {
 
 func MultiplyMarix(matrix1 Matrix, matrix2 Matrix) Matrix {
 	if matrix1.rows != matrix2.cols || matrix1.cols != matrix2.rows {
-		return
+		return Matrix{}
 	}
-	matrix := Matrix{rows: matrix1.rows, cols: matrix2.cols, data: make([][]int, matrix1.rows)}
-	sum := 0
+	matrix := Matrix{rows: matrix1.rows, cols: matrix2.cols, data: make([][]float64, matrix1.rows)}
+	sum := 0.0
 	for i := 0; i < matrix1.rows; i++ {
-		matrix.data[i] = make([]int, matrix2.cols)
+		matrix.data[i] = make([]float64, matrix2.cols)
 		for j := 0; j < matrix2.cols; j++ {
 			sum = 0
 			for k := 0; k < matrix1.cols; k++ {
@@ -116,16 +116,24 @@ func MultiplyMarix(matrix1 Matrix, matrix2 Matrix) Matrix {
 	return matrix
 }
 
+func DevideMarix(matrix1 Matrix, matrix2 Matrix) Matrix {
+	if matrix1.rows != matrix2.cols || matrix1.cols != matrix2.rows {
+		return Matrix{}
+	}
+	
+	inversedMatrix2 := InverseMatrix(matrix2)
+	matrix := MultiplyMarix(matrix1, inversedMatrix2)
 
-// ( 1 2 3 )
-// ( 4 5 6 )
-// ( 7 8 9 )
-func DeterminantMatrix(matrix Matrix) int {
+	return matrix
+}
+
+
+func DeterminantMatrix(matrix Matrix) float64 {
 	if matrix.rows != matrix.cols {
 		return 0
 	}
 
-	detMatrix := 0;
+	detMatrix := 0.0;
 
 	if matrix.rows == 2 {
 		detMatrix = DetMatrixWithDementionTwo(matrix.data);
@@ -133,21 +141,22 @@ func DeterminantMatrix(matrix Matrix) int {
 	}
 	
 	for i := 0; i < matrix.rows; i++ {
-		result := ExcludeLine(matrix.data, i)
-		detMatrix += int(math.Pow(-1, float64(i))) * DetMatrixWithDementionTwo(result)
+		result := MatrixMinor(matrix.data, 1, i)
+		detMatrix += math.Pow(-1, float64(i)) * DetMatrixWithDementionTwo(result)
 	}
 	return detMatrix
 }
 
-func ExcludeLine(matrix [][]int, line int) [][]int {
+func MatrixMinor(matrix [][]float64, detRow int, detCol int) [][]float64 {
 	var size = len(matrix)
-	var result [][]int = make([][]int, size - 1)
+	var result [][]float64 = make([][]float64, size - 1)
 	k := 0
-	for i := 1; i < size; i++ {
-		result[k] = make([]int, size - 1)
+	for i := 0; i < size; i++ {
+		if i == detRow { continue }
+		result[k] = make([]float64, size - 1)
 		d := 0
 		for j := 0; j < size ; j++ {
-			if j == line { continue }
+			if j == detCol { continue }
 			result[k][d] = matrix[i][j];
 			d++;
 		}
@@ -156,63 +165,55 @@ func ExcludeLine(matrix [][]int, line int) [][]int {
 	return result
 }
 
-func DetMatrixWithDementionTwo(matrix [][]int) int {
+func DetMatrixWithDementionTwo(matrix [][]float64) float64 {
 	return  matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0]
 }
 
-func InverseMatrix(matrix Matrix) Matrix {
-	inversedMatrix :=Matrix{rows: matrix.rows, cols: matrix.cols}
+func GetMatrixMinors(matrix Matrix) Matrix {
+	matrixMinors := Matrix{rows: matrix.rows, cols: matrix.cols, data: make([][]float64, matrix.rows)}
+	for i := 0; i < matrix.rows; i++ {
+		matrixMinors.data[i] = make([]float64, matrix.cols)
+		for j := 0; j < matrix.cols ; j++ {
+			result := MatrixMinor(matrix.data, i, j)
+			matrixMinors.data[i][j] = math.Pow(-1, float64(i+j)) * DetMatrixWithDementionTwo(result)
+		}
+	}
+	return matrixMinors
+}
 
+func InverseMatrix(matrix Matrix) Matrix {
+	var det float64 = DeterminantMatrix(matrix)
+	if ( det == 0 ) {
+		return Matrix{}
+	}
+
+	inversedMatrix := Matrix{rows: matrix.rows, cols: matrix.cols, data: make([][]float64, matrix.rows)}
+	result := GetMatrixMinors(matrix)
+	adjugateMatrix := TransposeMatrix(result)
+	fmt.Println("adjugate matrix : ")
+	DisplayMatrix(adjugateMatrix)
+
+	for i := 0; i < adjugateMatrix.rows; i++ {
+		inversedMatrix.data[i] = make([]float64, matrix.cols)
+		for j := 0; j < adjugateMatrix.cols ; j++ {
+			inversedMatrix.data[i][j] = (1/det) * float64(adjugateMatrix.data[i][j])
+		}
+	}
 
 	return inversedMatrix
 }
 
 func TransposeMatrix(matrix Matrix) Matrix {
-	transposedMatrix := Matrix{rows: matrix.cols, cols: matrix.rows, data: make([][]int, matrix.cols)}
+	transposedMatrix := Matrix{rows: matrix.cols, cols: matrix.rows, data: make([][]float64, matrix.cols)}
 
 	for i := 0; i < matrix.cols; i++ {
-		transposedMatrix.data[i] = make([]int, matrix.rows)
+		transposedMatrix.data[i] = make([]float64, matrix.rows)
 		for j := 0; j < matrix.rows; j++ {
 			transposedMatrix.data[i][j] = matrix.data[j][i]
 		}
 	}
 
 	return transposedMatrix
-}
-
-// https://www.youtube.com/watch?v=QGYvbsHDPxo
-func Strassen(matrix1 [][]int, matrix2 [][]int) {
-	if len(matrix1) != len(matrix2[0]) && len(matrix1[0]) != len(matrix2) {
-		return
-	}
-
-	var maxLine float64 = math.Max(float64(len(matrix1)), float64(len(matrix2)))
-	if CheckPower2(maxLine) && maxLine != 2 {
-
-	} else {
-
-	}
-
-	matrix := make([][]int, len(matrix1))
-	p1 := (matrix1[0][0] + matrix1[1][1]) * (matrix2[0][0] + matrix2[1][1])
-	p2 := (matrix1[1][0] + matrix1[1][1]) * matrix2[0][0]
-	p3 := matrix1[0][0] * (matrix2[0][1] - matrix2[1][1])
-	p4 := matrix1[1][1] * (matrix2[1][0] - matrix2[0][0])
-	p5 := (matrix1[0][0] + matrix1[0][1]) * matrix2[1][1]
-	p6 := (matrix1[1][0] - matrix1[0][0]) * (matrix2[0][0] + matrix2[0][1])
-	p7 := (matrix1[0][1] - matrix1[1][1]) * (matrix2[1][0] + matrix2[1][1])
-
-	matrix[0][0] = p1 + p4 - p5 + p7
-	matrix[0][1] = p3 + p5
-	matrix[1][0] = p2 + p4
-	matrix[1][1] = p1 + p3 - p2 + p6
-}
-
-func CheckPower2(num float64) bool {
-	if num == 0 {
-		return false
-	}
-	return math.Floor(math.Log2(num)) == math.Ceil(math.Log2(num))
 }
 
 func menu() (choice int) {
@@ -250,6 +251,10 @@ func main() {
 				result := SubstractMarixes(matrixes["matrix1"], matrixes["matrix2"])
 				fmt.Println("result of Substracting matrixes : ")
 				DisplayMatrix(result)
+			case 3:
+				result := DevideMarix(matrixes["matrix1"], matrixes["matrix2"])
+				fmt.Println("result of deviding : ")
+				DisplayMatrix(result)
 			case 4:
 				result := MultiplyMarix(matrixes["matrix1"], matrixes["matrix2"])
 				fmt.Println("result of multiplying : ")
@@ -261,6 +266,14 @@ func main() {
 
 				result2 := TransposeMatrix(matrixes["matrix2"])
 				fmt.Println("result of Transposed matrix 2 : ")
+				DisplayMatrix(result2)
+			case 6:
+				result1 := InverseMatrix(matrixes["matrix1"])
+				fmt.Println("result of Inversing matrix1 : ")
+				DisplayMatrix(result1)
+
+				result2 := InverseMatrix(matrixes["matrix2"])
+				fmt.Println("result of Inversing matrix2 : ")
 				DisplayMatrix(result2)
 			case 7:
 				fmt.Println("Det(matrix1) : ", DeterminantMatrix(matrixes["matrix1"]))
